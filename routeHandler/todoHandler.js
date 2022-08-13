@@ -4,9 +4,12 @@ const mongoose = require("mongoose");
 const todoSchema = require("../schemas/todoSchema");
 const Todo = new mongoose.model("Todo", todoSchema);
 
+//***(In this case I have to use anyone either (async + await with try + catch)
+// or (callback like err) ANY ONE ** both are given*/
+
 // GET all ther todos  **(if i need to find by select use exec)
-router.get("/", async (req, res) => {
-  await Todo.find({ status: "active" })
+router.get("/", (req, res) => {
+  Todo.find({ status: "active" })
     .select({
       _id: 0,
       __v: 0,
@@ -25,7 +28,7 @@ router.get("/", async (req, res) => {
         });
       }
     });
-  /* await Todo.find({ status: "active" }, (err, data) => {
+  /* Todo.find({ status: "active" }, (err, data) => {
     if (err) {
       res.status(500).json({
         error: "There was a server side error!",
@@ -36,29 +39,28 @@ router.get("/", async (req, res) => {
         message: "All todos are here successfully!",
       });
     }
-  }).clone(); */
+  }); */
 });
 
 // GET a todo by Id
 router.get("/:id", async (req, res) => {
-  await Todo.find({ _id: req.params.id }, (err, data) => {
-    if (err) {
-      res.status(500).json({
-        error: "There was a server side error!",
-      });
-    } else {
-      res.status(200).json({
-        result: data,
-        message: "Todo was find successfully!",
-      });
-    }
-  }).clone();
+  try {
+    const data = await Todo.find({ _id: req.params.id });
+    res.status(200).json({
+      result: data,
+      message: "Todo was find successfully!",
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: "There was a server side error!",
+    });
+  }
 });
 
 // POST a todo
-router.post("/", async (req, res) => {
+router.post("/", (req, res) => {
   const newTodo = new Todo(req.body);
-  await newTodo.save((err) => {
+  newTodo.save((err) => {
     if (err) {
       res.status(500).json({
         error: "There was a server side error!",
@@ -72,8 +74,8 @@ router.post("/", async (req, res) => {
 });
 
 // POST multiple todo
-router.post("/all", async (req, res) => {
-  await Todo.insertMany(req.body, (err) => {
+router.post("/all", (req, res) => {
+  Todo.insertMany(req.body, (err) => {
     if (err) {
       res.status(500).json({
         error: "There was a server side error!",
@@ -87,12 +89,12 @@ router.post("/all", async (req, res) => {
 });
 
 // PUT todo **(I also can show result in action video=26 (45min))
-router.put("/:id", async (req, res) => {
-  await Todo.updateOne(
+router.put("/:id", (req, res) => {
+  Todo.updateOne(
     { _id: req.params.id },
     {
       $set: {
-        status: "active",
+        status: "inactive",
       },
     },
     (err) => {
@@ -106,12 +108,12 @@ router.put("/:id", async (req, res) => {
         });
       }
     }
-  ).clone();
+  );
 });
 
 // DELETE todo
-router.delete("/:id", async (req, res) => {
-  await Todo.deleteOne({ _id: req.params.id }, (err) => {
+router.delete("/:id", (req, res) => {
+  Todo.deleteOne({ _id: req.params.id }, (err) => {
     if (err) {
       res.status(500).json({
         error: "There was a server side error!",
@@ -121,7 +123,7 @@ router.delete("/:id", async (req, res) => {
         message: "Todo was deleted successfully!",
       });
     }
-  }).clone();
+  });
 });
 
 module.exports = router;
